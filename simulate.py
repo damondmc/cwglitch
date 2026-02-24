@@ -60,14 +60,6 @@ def waveform(h0, cosi, freq, f1dot, f2dot, f3dot, f4dot, glitch_params_norm):
                 # Update effective frequency and f1dot
                 f_eff += df_p + df_t * np.exp(-delta_t / tau)
                 f1dot_eff += df1_p - df_t / tau * np.exp(-delta_t / tau)
-                
-                # dphi += df_p * dt # nomial freq permanent change
-                # dphi += df_t * np.exp(-dt / tau) * dt # nomial freq transisent change
-                # dphi += df1_p * 0.5 * dt**2
-                
-                # # Update effective frequency and f1dot
-                # f_eff += df_p + df_t * np.exp(-dt / tau)
-                # f1dot_eff += df1_p - df_t / tau * np.exp(-dt / tau)
         
         # Scale h0 based on effective f and f1dot
         if len(glitch_params_norm):
@@ -310,8 +302,6 @@ def main(params):
 
 # Example usage
 if __name__ == "__main__":
-    
-    
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Run lalpulsar_Weave commands with multiprocessing.")
     parser.add_argument('--t_ref', type=int, default=10,
@@ -353,9 +343,9 @@ if __name__ == "__main__":
         'freq_order': 2,
         'glitch_params_ranges': {
             'tglitch': (1368970000 + 0*86400, 1368970000 + 80*86400), 
-            'delta_f_over_f': (1e-21, 1e-2),
-            'delta_f1dot_over_f1dot': (1e-5, 1e-5),
-            'Q': (0.5, 0.5),
+            'delta_f_over_f': (3e-9, 3e-9),
+            'delta_f1dot_over_f1dot': (0, 0),
+            'Q': (0, 0),   # healing factor ( Q=1 means eventually no change)
             'tau': (20*86400, 20*86400)
         },
         'alpha': target.alpha,
@@ -363,6 +353,8 @@ if __name__ == "__main__":
         'seed': 0, 
         'n_cpu':16
     }
+
+#  default 
 #         'glitch_params_ranges': {
 #             'delta_f_over_f': (1e-9, 3e-6),
 #             'delta_f1dot_over_f1dot': (1e-4, 1e-1),

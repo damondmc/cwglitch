@@ -13,7 +13,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 def grid_size(m, T, factor=1):
-    """Calculate grid sizes for frequency and its derivatives."""
+    """Calculate grid sizes for frequency and its derivatives.
+
+    Args:
+        m (float): Some parameter related to the grid calculation.
+        T (float): Observation time.
+        factor (float, optional): Scaling factor for the grid sizes. Defaults to 1.
+
+    Returns:
+        list: Grid sizes for frequency, first derivative, and second derivative.
+    """
     df = 2 * np.sqrt(3*m) / np.pi / T
     df1 = 12 * np.sqrt(5*m) / np.pi / T**2
     df2 = 20 * np.sqrt(7*m) / np.pi / T**3
@@ -22,7 +31,21 @@ def grid_size(m, T, factor=1):
     return [df, df1, df2]
 
 def find_sft_file(i, fmin, fmax, label, homedir):
-    """Find the first .sft file in the data directory for given index and label."""
+    """Find the first .sft file in the data directory for given index and label.
+
+    Args:
+        i (int): Index of the simulation.
+        fmin (int): Minimum frequency.
+        fmax (int): Maximum frequency.
+        label (str): Label for the data directory.
+        homedir (str): Home directory path.
+
+    Returns:
+        str: Path to the first .sft file found.
+
+    Raises:
+        FileNotFoundError: If no .sft files are found.
+    """
     sft_pattern = os.path.join(homedir, f'data/{label}/{fmin}-{fmax}Hz/simCW{i}/*.sft')
     sft_files = glob.glob(sft_pattern)
     if not sft_files:
@@ -46,12 +69,11 @@ def run_command(args):
             f"--alpha={df['alpha'][i*n_glitch]}/0 "
             f"--delta={df['delta'][i*n_glitch]}/0 "
             f"--freq={df['f0'][i*n_glitch]-dx[0]}/{2*dx[0]} "
-#            f"--f1dot={df['f1'][i*n_glitch]-dx[1]}/{2*dx[1]} "
-#            f"--f2dot={df['f2'][i*n_glitch]-dx[2]}/{2*dx[2]}"
+            f"--f1dot={df['f1'][i*n_glitch]-dx[1]}/{2*dx[1]} "
+            f"--f2dot={df['f2'][i*n_glitch]-dx[2]}/{2*dx[2]}"
 #            f"--freq={df['f0'][i*n_glitch]}/0 "
-            f"--f1dot={df['f1'][i*n_glitch]}/0 "
-            f"--f2dot={df['f2'][i*n_glitch]}/0"
-
+#            f"--f1dot={df['f1'][i*n_glitch]}/0 "
+#            f"--f2dot={df['f2'][i*n_glitch]}/0"
         )
         print(command)
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)

@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from tqdm import tqdm
 
+
+
 def f_lim(freq, tau=300., obsDay=240.):
     # limit for narrowband [f-lim/2,f+0.9+lim/2] needed for search using 1 year data, ref time in the middle of the search 
     # lim ~ fdot *(t-tref) and |fdot| <= f/tau, tau = 300,700, lim<= f*(t-tref)/tau = 0.5 * f/300 * Tobs/365

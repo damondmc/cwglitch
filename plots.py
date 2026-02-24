@@ -3,6 +3,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 import matplotlib
+
+
+# Set matplotlib parameters
+mplparams = {
+    'text.usetex': False,  # use LaTeX for all text
+    'axes.linewidth': 1,  # set axes linewidths to 1
+    'axes.grid': False,  # add a grid
+    'axes.labelweight': 'normal',
+    'font.family': 'DejaVu Sans',
+    'font.size': 20  # Reduced from 22 to prevent overlap
+}
+matplotlib.rcParams.update(mplparams)
+plt.rcParams["mathtext.fontset"] = "cm"
+
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 
