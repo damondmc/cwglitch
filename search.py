@@ -61,10 +61,10 @@ def run_command(args):
             f"lalpulsar_Weave "
             f"--output-file={out_dir}/{label}_CW{i}.fts "
             f"--sft-files={sft_file} "
-            f"--setup-file={homedir}/metric/metric_{tcoh_day}d.fts "
-            f"--semi-max-mismatch=0.2 "
-            f"--coh-max-mismatch=0.1 "
-            f"--toplist-limit=1000 "
+            f"--setup-file={metric_file} "
+            f"--semi-max-mismatch={semimm} "
+            f"--coh-max-mismatch={cohmm} "
+            f"--toplist-limit={numtoplist} "
             f"--extra-statistics='coh2F_det,mean2F,coh2F_det,mean2F_det' "
             f"--alpha={df['alpha'][i*n_glitch]}/0 "
             f"--delta={df['delta'][i*n_glitch]}/0 "
@@ -122,7 +122,3 @@ def main():
 if __name__ == "__main__":
     main()
     
-    
-    
-    
-lalpulsar_WeaveSetup --output-file='metric_5d.fts'  --detectors='H1,L1' --ref-time=1372426000 --first-segment=1368970000/432000 --segment-count=16 --spindowns=2
