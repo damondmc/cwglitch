@@ -1,0 +1,16 @@
+# ==========================================
+# Target Parameters: Cas A
+# ==========================================
+
+name: CasA
+
+# Age in years
+age: 300 
+
+# Sky Position (Radians)
+alpha: 6.123767660522945   # RA
+delta: 1.0264611004281807 # DEC
+
+# Uncertainties / Search Region (Radians)
+dalpha: 0
+ddelta: 0

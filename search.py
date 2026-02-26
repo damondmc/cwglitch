@@ -1,4 +1,4 @@
-#!/home/hoitim.cheung/.conda/envs/glitch/bin/python
+#!/home/hoitim.cheung/.conda/envs/lalsuite-dev/bin/python
 import os
 import glob
 import subprocess
@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def grid_size(m, T, factor=1):
+def grid_size(m, tcoh, factor=1):
     """Calculate grid sizes for frequency and its derivatives.
 
     Args:
@@ -23,9 +23,9 @@ def grid_size(m, T, factor=1):
     Returns:
         list: Grid sizes for frequency, first derivative, and second derivative.
     """
-    df = 2 * np.sqrt(3*m) / np.pi / T
-    df1 = 12 * np.sqrt(5*m) / np.pi / T**2
-    df2 = 20 * np.sqrt(7*m) / np.pi / T**3
+    df = 2 * np.sqrt(3*m) / np.pi / tcoh
+    df1 = 12 * np.sqrt(5*m) / np.pi / tcoh**2
+    df2 = 20 * np.sqrt(7*m) / np.pi / tcoh**3
     df, df1, df2 = 2e-5, 1e-10, 5e-19
     #return [df*factor, df1*factor, df2*factor]
     return [df, df1, df2]
@@ -54,12 +54,12 @@ def find_sft_file(i, fmin, fmax, label, homedir):
 
 def run_command(args):
     """Run a single lalpulsar_Weave command."""
-    i, homedir, res_dir, label, fmin, fmax, n_glitch, df, dx, tcoh_day = args
+    i, out_dir, label, n_glitch, df, dx, tcoh_day = args
     try:
         sft_file = find_sft_file(i, fmin, fmax, label, homedir)
         command = (
             f"lalpulsar_Weave "
-            f"--output-file={homedir}/{res_dir}/{tcoh_day}d/{label}/{fmin}-{fmax}Hz/{label}_CW{i}.fts "
+            f"--output-file={out_dir}/{label}_CW{i}.fts "
             f"--sft-files={sft_file} "
             f"--setup-file={homedir}/metric/metric_{tcoh_day}d.fts "
             f"--semi-max-mismatch=0.2 "
@@ -87,71 +87,42 @@ def run_command(args):
         return None
 
 def main():
-    # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Run lalpulsar_Weave commands with multiprocessing.")
-    parser.add_argument('--label', default='no_glitch',
-                        help="Label for data directory (no_glitch or with_glitch)")
-    parser.add_argument('--cpus', type=int, default=16,
-                        help="Number of CPU cores to use for multiprocessing (default: all available)")
-    parser.add_argument('--fmin', type=int, default=100,
-                        help="Min. frequency.")
-    parser.add_argument('--fmax', type=int, default=100,
-                        help="Max. frequency.")
-    parser.add_argument('--n_glitch', type=int, default=1,
-                        help="Number of glitches per signal.")
-    parser.add_argument('--tcoh_day', type=int, default=5,
-                        help="Coherence time in day.")
-    parser.add_argument('--homedir', default='/home/hoitim.cheung/glitch/',
-                        help="Base directory path (default: /home/hoitim.cheung/glitch/)")
-    parser.add_argument('--res_dir', default='results',
-                       help="Result directory path (default: results)")
-    parser.add_argument('--n', type=int, default=16,
-                        help="Number of jobs (default: 16)")
+    parser.add_argument('--label', default='ng', help="Label for data directory")
+    parser.add_argument('--cpus', type=int, default=16, help="Number of CPU cores to use for multiprocessing")
+    parser.add_argument('--fmin', type=int, default=100, help="Min. frequency.")
+    parser.add_argument('--fmax', type=int, default=100, help="Max. frequency.")
+    parser.add_argument('--n_glitch', type=int, default=1, help="Number of glitches per signal.")
+    parser.add_argument('--tcoh_day', type=int, default=5, help="Coherence time in day.")
+    parser.add_argument('--homedir', default='/scratch/kriles_root/kriles0/damoncht/simGlitch', help="Base directory path")
+    parser.add_argument('--n', type=int, default=16, help="Number of jobs (default: 16)")
     args = parser.parse_args()
     
-    _label = args.label
-    tcoh_day = args.tcoh_day
-    n = args.n
-    fmin = args.fmin
-    fmax = args.fmax
     n_glitch = args.n_glitch
+    tcoh = 86400 * args.tcoh_day
+    dx = grid_size(m=0.1, tcoh=tcoh, factor=8)
 
-#    for tref_label in [10, 30, 50, 70, 90]:
-#        label = _label + f'_tg{tref_label}'
-    label = _label
-    # Configuration
-    homedir = args.homedir.rstrip('/')
-    res_dir = args.res_dir
-    m = 0.1
-    tcoh = 86400 * tcoh_day
-    if 'no_glitch' in label:
-        factor = 8
-    else:
-        factor = 8
-    dx = grid_size(m, tcoh, factor)
-
-    # Load CSV file into DataFrame
-    try:
-        df = pd.read_csv(os.path.join(homedir, f'data/{label}/{fmin}-{fmax}Hz/signal_glitch_params.csv'))
-        logger.info("DataFrame loaded successfully")
-        logger.info(f"DataFrame head:\n{df}")
-    except FileNotFoundError:
-        logger.error(f"CSV file not found: {os.path.join(homedir, f'data/{label}/{fmin}-{fmax}Hz/signal_glitch_params.csv')}")
-        return
+    csv_path = f'{args.homedir}/data/{args.label}/{fmin}-{fmax}Hz/signal_glitch_params.csv'
+    df = pd.read_csv(csv_path)
 
     # Create output directory
-    os.makedirs(os.path.join(homedir, res_dir, f'{tcoh_day}d', label, f'{fmin}-{fmax}Hz'), exist_ok=True)
+    out_dir = os.path.join(homedir, 'results', f'{args.tcoh_day}d', args.label, f'{fmin}-{fmax}Hz')
+    os.makedirs(out_dir, exist_ok=True)
 
     # Prepare arguments for multiprocessing
-    command_args = [(i, homedir, res_dir, label, fmin, fmax, n_glitch, df, dx, tcoh_day) for i in range(n)]
+    command_args = [(i, out_dir, args.label, n_glitch, df, dx, tcoh_day) for i in range(args.n)]
 
     # Run commands in parallel
-    try:
-        with Pool(processes=args.cpus) as pool:
-            pool.map(run_command, command_args)
-        logger.info("All commands completed")
-    except Exception as e:
-        logger.error(f"Multiprocessing failed: {str(e)}")
+    with Pool(processes=args.cpus) as pool:
+        pool.map(run_command, command_args)
+        
+    print("All commands completed")
+
 
 if __name__ == "__main__":
     main()
+    
+    
+    
+    
+lalpulsar_WeaveSetup --output-file='metric_5d.fts'  --detectors='H1,L1' --ref-time=1372426000 --first-segment=1368970000/432000 --segment-count=16 --spindowns=2

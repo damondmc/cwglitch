@@ -1,0 +1,28 @@
+# ==========================================
+# Search Configuration
+# ==========================================
+
+# --- User & Paths ---
+user: damoncht
+home_dir: /scratch/kriles_root/kriles0/damoncht/simGlitch
+
+# Executables
+executables:
+  weave: ~/opt/lalsuite/bin/lalpulsar_Weave
+
+# --- Data label ---
+sft_source: C02_Gated_1800s
+
+# --- Search Configuration Parameters ---
+f0_band: 0.001   # Resolution of search in frequency
+semi_mm: 0.2   # Maximum accepted mismatch of the semicoherent metric (over the whole observation time)
+coh_mm: 0.1     # Maximum accepted mismatch of the coherent metrics (each segment)
+num_top_list: 5000  # Number of top candidates to keep from the search job
+
+# --- Injection & Follow-up ---
+cluster_n_spacing: 4.0   # For injection and followUp
+followup_n_spacing: 8.0  # For injection and followUp
+
+# --- Braking index ---
+nc_min: 2.0
+nc_max: 7.0
