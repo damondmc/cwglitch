@@ -27,7 +27,7 @@ def waveform(h0, cosi, freq, f1dot, f2dot, f3dot, f4dot, glitch_params_norm):
     h0_scale = h0 / np.sqrt(np.abs(f1dot0) / f0)
     
     def wf(dt):
-        dphi = freq * dt + f1dot * 0.5 * dt**2 + f2dot * (1./6.) * dt**3 + \
+        dphi = freq * dt + f1dot * (1./2.) * dt**2 + f2dot * (1./6.) * dt**3 + \
                f3dot * (1./24.) * dt**4 + f4dot * (1./120.) * dt**5
         
         f_eff = f0
