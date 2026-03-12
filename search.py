@@ -60,7 +60,7 @@ def run_command(args):
         f"--f1dot={f1_arg} "
         f"--f2dot={f2_arg}"
     )
-
+    #print(command)
     result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
 
     return result.stdout

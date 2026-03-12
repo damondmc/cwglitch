@@ -15,6 +15,6 @@ source /home/damoncht/miniconda3/etc/profile.d/conda.sh
 
 conda activate lalsuite-dev
 
-python simulate.py --n_cpu 16 --label "wg_dnu_nu_1e-5_q0.3" --freq 100.0
+python simulate.py --n_cpu 16 --label "wg_dnu1_nu1_1e-2" --freq 100.0
 
 echo "Simulation job finished"
