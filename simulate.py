@@ -202,7 +202,7 @@ if __name__ == "__main__":
     }
     print(f"Observational Setup -> depth:{depth}, sqrtSX:{sqrtSX}, h0:{h0}")
     
-    save_path = f'/scratch/kriles_root/kriles0/damoncht/simGlitch/data/{args.label}/100-100Hz'
+    save_path = f'/scratch/kriles_root/kriles0/damoncht/cwglitch/data/{args.label}/100-100Hz'
     csv_path = f'{save_path}/signal_glitch_params.csv'
     print(f"Loading astrophysical parameters from: {csv_path}")
     if not os.path.exists(csv_path):

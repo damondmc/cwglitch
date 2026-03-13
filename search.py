@@ -75,7 +75,7 @@ def main():
     parser.add_argument('--n_glitch', type=int, default=1)
     parser.add_argument('--tcoh_list', type=int, nargs='+', default=[5, 10, 20, 40], help="List of coherence times in days")
     parser.add_argument('--df_grid', type=float, nargs=3, help="[df, df1, df2]")
-    parser.add_argument('--homedir', default='/scratch/kriles_root/kriles0/damoncht/simGlitch')
+    parser.add_argument('--homedir', default='/scratch/kriles_root/kriles0/damoncht/cwglitch')
     args = parser.parse_args()
     
     with open(f'{args.homedir}/config/config.yaml', 'r') as f:

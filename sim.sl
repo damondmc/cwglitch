@@ -9,7 +9,7 @@
 #SBATCH --time=01:00:00
 #SBATCH --account=kriles1
 #SBATCH --partition=standard
-#SBATCH --output=/scratch/kriles_root/kriles0/damoncht/simGlitch/out/sim_1e-8.out
+#SBATCH --output=/scratch/kriles_root/kriles0/damoncht/cwglitch/out/sim_1e-8.out
 
 source /home/damoncht/miniconda3/etc/profile.d/conda.sh
 
