@@ -74,7 +74,7 @@ def gen_frequency_params(nSample, n, freq_ranges):
 #####################################################
 
 
-def gen_glitch_params(n, m, tstart, tobs, 
+def gen_glitch_params(n, m, 
                       tglitch_range=(1368970000, 1368970000 + 100*86400),
                       dnu_nu_range=(1e-9, 1e-6), 
                       dnu1_nu1_range=(-1e-4, -1e-3), 
@@ -89,17 +89,8 @@ def gen_glitch_params(n, m, tstart, tobs,
     print("Generating glitch parameters.")
         
     # 1. Glitch times: 
-    # tglitch = np.random.uniform(tstart, tstart + tobs, m)
-    # tglitch = np.random.uniform(tglitch_range[0], tglitch_range[1], m)
     tglitch = np.random.uniform(tglitch_range[0], tglitch_range[1], size=(n, m))
-    
-    # 1. Glitch times: Evenly spaced across the range for testing
-    # Creates m evenly spaced times
-    #tglitch_base = np.linspace(tglitch_range[0], tglitch_range[1], m)
-    
-    # Duplicates that exact sequence for all n pulsars, creating an (n, m) array
-    # tglitch = np.tile(tglitch_base, (n, 1))
-    
+        
     # 2. Relative Frequency changes
     dnu_nu = np.random.uniform(dnu_nu_range[0], dnu_nu_range[1], size=(n, m))
     
@@ -135,7 +126,7 @@ def calc_absolute_glitch_params(nu, nu1dot, dnu_nu, dnu1_nu1, Q):
     
     return dnu_p, dnu_t, dnu1_p
 
-def save_params(n, m, tstart, freq_params, amp_params, sky_params, glitch_params, filepath):
+def save_params(n, m, freq_params, amp_params, sky_params, glitch_params, filepath):
     """
     Save parameters to a CSV file, combining source parameters with relative glitch parameters.
     """
@@ -145,8 +136,8 @@ def save_params(n, m, tstart, freq_params, amp_params, sky_params, glitch_params
     
     # Append new relative glitch-specific headers and formats (6 columns)
     if m > 0:
-        headers.extend(['tglitch', 'dnu_nu', 'dnu1_nu1', 'Q', 'tau', 'tglitch_day'])
-        fmt.extend(['%d', '%.8e', '%.8e', '%.8f', '%.8f', '%.2f'])
+        headers.extend(['tglitch', 'dnu_nu', 'dnu1_nu1', 'Q', 'tau'])
+        fmt.extend(['%d', '%.8e', '%.8e', '%.8f', '%.8f'])
 
     data = []
     
@@ -164,10 +155,8 @@ def save_params(n, m, tstart, freq_params, amp_params, sky_params, glitch_params
                 row.insert(1, j) 
                 
                 g_params = glitch_params[i][j]
-                tglitch_day = (g_params[0] - tstart) / 86400.0
                 
                 row.extend(g_params)
-                row.append(tglitch_day)
                 data.append(row)
         else:
             row = base_params.copy()

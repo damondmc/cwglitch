@@ -9,12 +9,12 @@
 #SBATCH --time=01:00:00
 #SBATCH --account=kriles1
 #SBATCH --partition=standard
-#SBATCH --output=/scratch/kriles_root/kriles0/damoncht/cwglitch/out/sim_1e-8.out
+#SBATCH --output=/scratch/kriles_root/kriles0/damoncht/cwglitch/out/sim4.out
 
 source /home/damoncht/miniconda3/etc/profile.d/conda.sh
 
 conda activate lalsuite-dev
 
-python simulate.py --n_cpu 16 --label "wg_dnu1_nu1_1e-2" --freq 100.0
+python simulate.py --n_cpu 16 --label "wg_dnu_nu_1e-6_q_1" --freq 100.0
 
 echo "Simulation job finished"
