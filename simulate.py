@@ -79,7 +79,7 @@ def simulate_signal(signal_params):
     IFOS = signal_params['IFOS']
     Tsft = signal_params['Tsft']
     sqrtSX = signal_params['sqrtSX']
-    sft_files = signal_params['sft_files']
+    sft_dir = signal_params['sft_dir']
     save_path = signal_params['save_path']
     signal_idx = signal_params['signal_idx']
     
@@ -134,10 +134,11 @@ def simulate_signal(signal_params):
         sim_sfts = lp.LoadSFTs(sim_catalog, -1, -1)
 
         # 2. Determine final SFT vector
-        if sft_files is not None:
+        if sft_dir is not None:
             # Handle Real Data
             constraints = lp.SFTConstraints()
             constraints.detector = ifo
+            sft_files = os.path.join(sft_dir, f'{ifo[0]}-*.sft')
             data_catalog = lp.SFTdataFind(sft_files, constraints=constraints)
             data_sfts = lp.LoadSFTs(data_catalog, -1, -1)
 
@@ -197,7 +198,7 @@ def main(timestamps, df, obs_params, save_path, n_cpu):
             'h0': obs_params['h0'],
 
             'timestamps': timestamps,
-            'sft_files': obs_params['sft_files'],
+            'sft_dir': obs_params['sft_dir'],
             'sqrtSX': obs_params['sqrtSX'],
             'tref': obs_params['tref'],
             'dt_wf': obs_params['dt_wf'],
@@ -227,7 +228,7 @@ if __name__ == "__main__":
     parser.add_argument('--label', default='wglitch_f1_3e-9', help="Label for data directory")
     parser.add_argument('--freq', type=float, default=100.0, help="Target frequency")
     parser.add_argument('--timestamps_file', default='/scratch/kriles_root/kriles0/damoncht/cwglitch/data/real_data/o4a_timestamps.csv', help="Path to text file containing GPS timestamps")
-    parser.add_argument('--sft_files', type=str, default=None, help="Path or wildcard pattern to real SFTs (e.g. '/path/to/*.sft')")
+    parser.add_argument('--sft_dir', type=str, default=None, help="Path or wildcard pattern to real SFTs (e.g. '/path/to/*.sft')")
     parser.add_argument('--ref_time', type=float, default=1372426000, help="Reference time for simulation (GPS)")
     parser.add_argument('--Tsft', type=float, default=1800, help="Duration of each SFT segment in seconds")
     parser.add_argument('--IFOS', nargs='+', default=['H1', 'L1'], help="List of interferometers to simulate (e.g. --IFOS H1 L1)")
@@ -239,11 +240,11 @@ if __name__ == "__main__":
     args = parser.parse_args() 
 
     # --- 1. Real Data vs Gaussian Noise ---
-    if args.sft_files is not None and args.sqrtSX is not None:
-        raise ValueError("Conflict: Cannot provide both --sft_files (real data) and --sqrtSX (Gaussian noise). Please choose one.")
+    if args.sft_dir is not None and args.sqrtSX is not None:
+        raise ValueError("Conflict: Cannot provide both --sft_dir (real data) and --sqrtSX (Gaussian noise). Please choose one.")
 
-    if args.sft_files is None and args.sqrtSX is None:
-        raise ValueError("Conflict: Cannot missing both --sft_files (real data) and --sqrtSX (Gaussian noise). Please choose one.")
+    if args.sft_dir is None and args.sqrtSX is None:
+        raise ValueError("Conflict: Cannot missing both --sft_dir (real data) and --sqrtSX (Gaussian noise). Please choose one.")
         
     # --- 2. Calculate Depth safely AFTER setting defaults ---
     if args.sqrtSX is not None:
@@ -258,7 +259,7 @@ if __name__ == "__main__":
     obs_params = {
         'freq': args.freq,
         'sqrtSX': sqrtSX,
-        'sft_files': args.sft_files,
+        'sft_dir': args.sft_dir,
         'h0': args.h0,
         'tref': args.ref_time,
         'dt_wf': args.dt_wf,
