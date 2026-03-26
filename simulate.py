@@ -11,7 +11,6 @@ import pandas as pd
 from tqdm import tqdm
 import argparse
 from params import calc_absolute_glitch_params
-from sft import combine_sfts
 
 
 def waveform(h0, cosi, freq, f1dot, f2dot, f3dot, f4dot, glitch_params_norm):
@@ -115,23 +114,44 @@ def simulate_signal(signal_params):
 
     # Create output directories for this signal
     signal_out_dir = os.path.join(save_path, f"simCW{signal_idx}")
-    temp_dir = os.path.join(save_path, 'tmp', f"simCW{signal_idx}")    
+    single_sft_dir = os.path.join(save_path, 'tmp', f"simCW{signal_idx}_large")    
+    cropped_sft_dir = os.path.join(save_path, 'tmp', f"simCW{signal_idx}_cropped")
+    
     os.makedirs(signal_out_dir, exist_ok=True)
-    os.makedirs(temp_dir, exist_ok=True)
+    os.makedirs(single_sft_dir, exist_ok=True)
+    os.makedirs(cropped_sft_dir, exist_ok=True)
+
+    print(f"[Signal {signal_idx}] Starting. Band: [{fmin}, {fmax}] Hz. df: {df:.2e}", flush=True)
 
     for ifo in IFOS:
-        injection_sfts = []
-        print(f"Simulating signal {signal_idx} for {ifo} in band [{fmin}, {fmax}] Hz with df={df:.2e} Hz...")
+        print(f"[Signal {signal_idx}] {ifo}: Simulating {len(timestamps[ifo])} SFTs...", flush=True)
+        t0_gen = time.time()
         
-        for t in timestamps[ifo]:
+        for i, t in enumerate(timestamps[ifo]):
             simulator = simulateCW.CWSimulator(tref, t, Tsft, wf, dt_wf, phi0, psi, alpha, delta, ifo)
-            for file, _, _ in simulator.write_sft_files(noise_sqrt_Sh=sqrtSX, fmax=fmax, Tsft=Tsft, comment=f"simCW{signal_idx}", out_dir=temp_dir):
-                injection_sfts.append(file)
+            for file, _, _ in simulator.write_sft_files(noise_sqrt_Sh=sqrtSX, fmax=fmax, Tsft=Tsft, comment=f"simCW{signal_idx}", out_dir=single_sft_dir):
+                single_cat = lp.SFTdataFind(file, constraints=None)
+                tiny_sft = lp.LoadSFTs(single_cat, fmin, fmax)
+                
+                spec = lp.SFTFilenameSpec()
+                spec.path = cropped_sft_dir
+                spec.window_type = window_type
+                spec.window_param = window_param
+                spec.privMisc = f'simCW{signal_idx}'
+                lp.WriteSFTVector2StandardFile(tiny_sft, spec, SFTcomment='simCW', merged=False)
+
+                os.remove(file)
+
+            if (i + 1) % 3000 == 0:
+                print(f"[Signal {signal_idx}] {ifo}: Generated {i + 1}/{len(timestamps[ifo])} SFTs...", flush=True)
+
+        print(f"[Signal {signal_idx}] {ifo}: Generation finished in {time.time() - t0_gen:.1f}s. Loading into memory...", flush=True)
 
         # 1. Load the generated signal/noise
-        exact_sim_files = ";".join(injection_sfts)
-        sim_catalog = lp.SFTdataFind(exact_sim_files, constraints=None)
+        t0_load = time.time()
+        sim_catalog = lp.SFTdataFind(f"{cropped_sft_dir}/*.sft", constraints=None)
         sim_sfts = lp.LoadSFTs(sim_catalog, -1, -1)
+        print(f"[Signal {signal_idx}] {ifo}: Loaded {sim_sfts.length} sim SFTs in {time.time() - t0_load:.1f}s.", flush=True)
 
         # 2. Determine final SFT vector
         if sft_dir is not None:
@@ -140,7 +160,7 @@ def simulate_signal(signal_params):
             constraints.detector = ifo
             sft_files = os.path.join(sft_dir, f'{ifo[0]}-*.sft')
             data_catalog = lp.SFTdataFind(sft_files, constraints=constraints)
-            data_sfts = lp.LoadSFTs(data_catalog, -1, -1)
+            data_sfts = lp.LoadSFTs(data_catalog, fmin, fmax)
 
             real_timestamps = np.array([float(data_sfts.data[i].epoch) for i in range(data_sfts.length)])
             if len(real_timestamps) != len(timestamps[ifo]) or not np.allclose(real_timestamps, timestamps[ifo], atol=1.0):
@@ -150,11 +170,12 @@ def simulate_signal(signal_params):
                     f"Timestamps file provided: {len(timestamps[ifo])}\n"
                     f"Ensure the --timestamps file perfectly matches the SFTs located at {sft_files}."
                 )
-            
+            print(f"[Signal {signal_idx}] {ifo}: Resizing bands and adding SFTs...", flush=True)
+            lp.SFTVectorResizeBand(data_sfts, fmin, fband)
             lp.SFTVectorResizeBand(sim_sfts, fmin, fband)
             lp.SFTVectorAdd(data_sfts, sim_sfts, fmin, fband)
         else:
-            # Handle Gaussian Noise
+            print(f"[Signal {signal_idx}] {ifo}: Resizing sim band...", flush=True)
             lp.SFTVectorResizeBand(sim_sfts, fmin, fband)
             data_sfts = sim_sfts   # We will save the generated noise
             
@@ -165,6 +186,13 @@ def simulate_signal(signal_params):
         spec.window_param = window_param
         spec.privMisc = f'simCW{signal_idx}'
         lp.WriteSFTVector2StandardFile(data_sfts, spec, SFTcomment='simCW', merged=True)
+        
+        # Clean up the tiny cropped files for this IFO
+        shutil.rmtree(cropped_sft_dir)
+        if os.path.exists(single_sft_dir):
+            shutil.rmtree(single_sft_dir)
+
+    print(f"[Signal {signal_idx}] Fully complete.", flush=True)
 
 def main(timestamps, df, obs_params, save_path, n_cpu):
     # Group by signal index to handle multiple glitches per pulsar
