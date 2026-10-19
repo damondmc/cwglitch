@@ -1,0 +1,37 @@
+label: wg_dnu_nu_1e-6_q_0.7
+out_dir: /scratch/kriles_root/kriles0/damoncht/cwglitch/data
+seed: 0
+n_cpu: 8
+
+source:
+  n_signals: 16
+  h0: 1.0e-25
+  freq: [100.0, 100.0]
+  spindown: {kind: age, years: 300}      # f1dot = -freq / age; or {kind: f1dot, range: [lo, hi]}
+  f2dot: [0.0, 0.0]
+  f3dot: [0.0, 0.0]
+  f4dot: [0.0, 0.0]
+  phi0: [0.0, 0.0]
+  psi: [0.7853981633974483, 0.7853981633974483]
+  cosi: [1.0, 1.0]
+  alpha: 6.123767660522945   # Cas A, radians
+  delta: 1.0264611004281807
+
+glitch:
+  n_per_signal: 1
+  tglitch: [0.0, 1.0]       # fraction of the observation span
+  dnu_nu: [1.0e-6, 1.0e-6]
+  dnu1_nu1: [1.0e-3, 1.0e-3]
+  Q: [0.7, 0.7]
+  tau: [864000, 864000]     # seconds
+  evenly_spaced_tglitch: true
+
+observation:
+  ifos: [H1, L1]
+  tref: 1372426000
+  Tsft: 1800
+  timestamps_file: /scratch/kriles_root/kriles0/damoncht/cwglitch/data/real_data/o4a_timestamps.csv
+  noise: {kind: gaussian, sqrtSX: 1.0e-22}   # or {kind: real, sft_dir: /path/to/sfts}
+  dt_wf: 5.0
+  window_type: tukey
+  window_param: 0.001
