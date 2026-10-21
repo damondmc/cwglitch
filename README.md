@@ -7,7 +7,6 @@ or injected into real data.
 
 ```
 uv sync
-uv run pytest
 ```
 
 ## Waveform model
@@ -15,10 +14,10 @@ uv run pytest
 The signal phase at the solar system barycentre, with $\Delta t = t - t_\mathrm{ref}$, is
 
 $$
-\phi(\Delta t) = 2\pi \left[ f_0 \Delta t + \tfrac{1}{2} f_1 \Delta t^2 + \tfrac{1}{6} f_2 \Delta t^3
-+ \tfrac{1}{24} f_3 \Delta t^4 + \tfrac{1}{120} f_4 \Delta t^5 \right]
-+ 2\pi \sum_{\mathrm{glitches}} \Theta(t - t_\mathrm{g}) \left[ (1-Q)\,\Delta\nu\, (t - t_\mathrm{g})
-+ Q\,\Delta\nu\,\tau \left(1 - e^{-(t - t_\mathrm{g})/\tau}\right) + \tfrac{1}{2}\,\Delta\dot\nu\, (t - t_\mathrm{g})^2 \right]
+\begin{aligned}
+\phi(\Delta t) ={}& 2\pi \left[ f_0 \Delta t + \tfrac{1}{2} f_1 \Delta t^2 + \tfrac{1}{6} f_2 \Delta t^3 + \tfrac{1}{24} f_3 \Delta t^4 + \tfrac{1}{120} f_4 \Delta t^5 \right] \\
+&+ 2\pi \sum_{\mathrm{glitches}} \Theta(t - t_\mathrm{g}) \left[ (1-Q)\,\Delta\nu\,(t - t_\mathrm{g}) + Q\,\Delta\nu\,\tau \left(1 - e^{-(t - t_\mathrm{g})/\tau}\right) + \tfrac{1}{2}\,\Delta\dot\nu\,(t - t_\mathrm{g})^2 \right]
+\end{aligned}
 $$
 
 The glitch model: each glitch at
