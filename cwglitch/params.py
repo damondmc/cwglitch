@@ -10,17 +10,17 @@ class Glitch(BaseModel):
     tglitch: float  # fraction of the observation span
     dnu_nu: float
     dnu1_nu1: float
-    Q: float
+    healing_factor: float
     tau: float  # seconds
 
 
 class Signal(BaseModel):
     idx: int
     f0: float
-    f1: float
-    f2: float = 0.0
-    f3: float = 0.0
-    f4: float = 0.0
+    f1dot: float
+    f2dot: float = 0.0
+    f3dot: float = 0.0
+    f4dot: float = 0.0
     phi0: float
     psi: float
     cosi: float
@@ -37,40 +37,44 @@ def sample_signals(cfg: Config, rng: np.random.Generator) -> list[Signal]:
     n, m = src.n_signals, gl.n_per_signal
 
     f0 = rng.uniform(*src.freq, n)
-    if src.spindown.kind == "age":
-        f1 = -f0 / (src.spindown.years * 365.25 * 86400.0)
-    else:
-        f1 = rng.uniform(*src.spindown.range, n)
-    f2 = rng.uniform(*src.f2dot, n)
-    f3 = rng.uniform(*src.f3dot, n)
-    f4 = rng.uniform(*src.f4dot, n)
+    f1dot = rng.uniform(*src.f1dot, n)
+    f2dot = rng.uniform(*src.f2dot, n)
+    f3dot = rng.uniform(*src.f3dot, n)
+    f4dot = rng.uniform(*src.f4dot, n)
     phi0 = rng.uniform(*src.phi0, n)
     psi = rng.uniform(*src.psi, n)
     cosi = rng.uniform(*src.cosi, n)
 
+    # glitch params
     tglitch = rng.uniform(*gl.tglitch, (n, m))
     dnu_nu = rng.uniform(*gl.dnu_nu, (n, m))
     dnu1_nu1 = rng.uniform(*gl.dnu1_nu1, (n, m))
-    Q = rng.uniform(*gl.Q, (n, m))
+    healing_factor = rng.uniform(*gl.healing_factor, (n, m))
     tau = rng.uniform(*gl.tau, (n, m))
     if m and gl.evenly_spaced_tglitch:
-        tglitch[:, 0] = np.linspace(gl.tglitch[0], gl.tglitch[1], n)
+        tglitch[:] = np.linspace(gl.tglitch[0], gl.tglitch[1], m)
 
     signals: list[Signal] = []
     for i in range(n):
         order = np.argsort(tglitch[i])
         glitches = [
-            Glitch(tglitch=tglitch[i, j], dnu_nu=dnu_nu[i, j], dnu1_nu1=dnu1_nu1[i, j], Q=Q[i, j], tau=tau[i, j])
+            Glitch(
+                tglitch=tglitch[i, j],
+                dnu_nu=dnu_nu[i, j],
+                dnu1_nu1=dnu1_nu1[i, j],
+                healing_factor=healing_factor[i, j],
+                tau=tau[i, j],
+            )
             for j in order
         ]
         signals.append(
             Signal(
                 idx=i,
                 f0=f0[i],
-                f1=f1[i],
-                f2=f2[i],
-                f3=f3[i],
-                f4=f4[i],
+                f1dot=f1dot[i],
+                f2dot=f2dot[i],
+                f3dot=f3dot[i],
+                f4dot=f4dot[i],
                 phi0=phi0[i],
                 psi=psi[i],
                 cosi=cosi[i],

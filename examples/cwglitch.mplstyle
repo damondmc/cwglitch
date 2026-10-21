@@ -1,0 +1,29 @@
+# Plotting style for the examples (same as jpec): plt.style.use("examples/cwglitch.mplstyle")
+
+text.usetex: True
+text.latex.preamble: \usepackage{amsmath}
+font.family: serif
+font.serif: Computer Modern Roman
+mathtext.fontset: cm
+axes.formatter.use_mathtext: True
+axes.unicode_minus: False
+
+font.size: 12
+axes.titlesize: 12
+axes.labelsize: 12
+xtick.labelsize: 11
+ytick.labelsize: 11
+legend.fontsize: 10.5
+figure.titlesize: 13
+
+lines.linewidth: 1.4
+axes.linewidth: 0.8
+xtick.major.width: 0.8
+ytick.major.width: 0.8
+xtick.direction: in
+ytick.direction: in
+legend.frameon: False
+figure.dpi: 100
+savefig.dpi: 150
+
+axes.prop_cycle: cycler("color", ["0E7C86", "B4622A", "6B5B95", "E08A48", "3FB6BF"])

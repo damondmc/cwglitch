@@ -9,7 +9,6 @@ description = "Simulate continuous gravitational-wave signals with pulsar glitch
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
-    "pandas",
     "pyyaml",
     "pydantic>=2",
     "tqdm",
@@ -25,9 +24,14 @@ include = ["cwglitch*"]
 
 [dependency-groups]
 dev = [
+    "matplotlib>=3.10.9",
     "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
     "ruff>=0.17.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.pyright]
 venvPath = "."

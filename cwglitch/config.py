@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Literal
 
@@ -9,21 +10,13 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class SpindownFromAge(Strict):
-    kind: Literal["age"]
-    years: float = Field(gt=0)  # f1dot = -f0 / age
-
-
-class SpindownRange(Strict):
-    kind: Literal["f1dot"]
-    range: tuple[float, float]
-
-
 class SourceConfig(Strict):
     n_signals: int = Field(gt=0)
     h0: float = Field(gt=0)
+    distance_kpc: float = Field(gt=0)
+    moment_of_inertia: float = Field(gt=0)  # kg m^2
     freq: tuple[float, float]
-    spindown: SpindownFromAge | SpindownRange = Field(discriminator="kind")
+    f1dot: tuple[float, float]
     f2dot: tuple[float, float]
     f3dot: tuple[float, float]
     f4dot: tuple[float, float]
@@ -39,13 +32,13 @@ class GlitchConfig(Strict):
     tglitch: tuple[float, float]  # fraction of the observation span
     dnu_nu: tuple[float, float]
     dnu1_nu1: tuple[float, float]
-    Q: tuple[float, float]
+    healing_factor: tuple[float, float]
     tau: tuple[float, float]  # seconds
-    evenly_spaced_tglitch: bool  # first glitch of each signal on an even grid over the tglitch range
+    evenly_spaced_tglitch: bool
 
     @model_validator(mode="after")
     def _check(self) -> "GlitchConfig":
-        for name in ("tglitch", "Q"):
+        for name in ("tglitch", "healing_factor"):
             lo, hi = getattr(self, name)
             if not (0.0 <= lo <= hi <= 1.0):
                 raise ValueError(f"'{name}' range must satisfy 0 <= lo <= hi <= 1.")
@@ -57,40 +50,56 @@ class GlitchConfig(Strict):
 class GaussianNoise(Strict):
     kind: Literal["gaussian"]
     sqrtSX: float = Field(gt=0)
+    timestamps: Path  # {"H1": [GPS start times], "L1": [...]}
 
 
 class RealData(Strict):
     kind: Literal["real"]
-    sft_dir: Path  # inject into the SFTs found here
+    sft_glob: str  # SFT files to inject into; IFO is selected from the SFT headers, timestamps come from them
 
 
 class ObservationConfig(Strict):
     ifos: list[str] = Field(min_length=1)
     tref: float
     Tsft: float = Field(gt=0)
-    timestamps_file: Path  # CSV, one column per IFO of SFT start times (GPS), NaN padded
     noise: GaussianNoise | RealData = Field(discriminator="kind")
     dt_wf: float = Field(gt=0)
     window_type: str
     window_param: float
 
 
+class OutputConfig(Strict):
+    dir: Path
+    params_file: str
+    sft_label: str
+
+
 class Config(Strict):
-    label: str
-    out_dir: Path
+    output: OutputConfig
     seed: int
     n_cpu: int = Field(gt=0)
     source: SourceConfig
     glitch: GlitchConfig
     observation: ObservationConfig
 
-    @property
-    def run_dir(self) -> Path:
-        return self.out_dir / self.label
+    @model_validator(mode="after")
+    def _check(self) -> "Config":
+        label = self.output.sft_label
+        if self.source.n_signals > 1 and "{idx}" not in label:
+            raise ValueError("'sft_label' must contain {idx} when n_signals > 1.")
+        if not re.fullmatch(r"[A-Za-z0-9]+", label.format(idx=0)):
+            raise ValueError("'sft_label' must be alphanumeric: LAL SFT file descriptions allow only A-Za-z0-9.")
+        return self
 
     @property
     def params_file(self) -> Path:
-        return self.run_dir / "signal_params.json"
+        return self.output.dir / self.output.params_file
+
+    def sft_label(self, idx: int) -> str:
+        return self.output.sft_label.format(idx=idx)
+
+    def sft_dir(self, idx: int) -> Path:
+        return self.output.dir / self.sft_label(idx)
 
 
 def load_config(path: str | Path) -> Config:

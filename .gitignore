@@ -1,4 +1,6 @@
 data/
+data_sfdb/
+*.sft
 metric/
 others/
 out/

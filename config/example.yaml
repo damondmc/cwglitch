@@ -1,13 +1,17 @@
-label: wg_dnu_nu_1e-6_q_0.7
-out_dir: /scratch/kriles_root/kriles0/damoncht/cwglitch/data
+output:
+  dir: /scratch/kriles_root/kriles0/damoncht/cwglitch/data/wg_dnu_nu_1e-6_q_0.7
+  params_file: signal_params.json   # sampled parameters, relative to dir
+  sft_label: simCW{idx}             # per-signal subdirectory and SFT file description, A-Za-z0-9 only
 seed: 0
 n_cpu: 8
 
 source:
   n_signals: 16
-  h0: 1.0e-25
+  h0: 1.0e-25                # persistent strain
+  distance_kpc: 3.4          # Cas A; with moment_of_inertia sets each glitch's transient strain (Yim & Jones 2020)
+  moment_of_inertia: 1.0e38  # kg m^2
   freq: [100.0, 100.0]
-  spindown: {kind: age, years: 300}      # f1dot = -freq / age; or {kind: f1dot, range: [lo, hi]}
+  f1dot: [-1.056e-8, -1.056e-8]  # -freq / age for a 300 yr characteristic age
   f2dot: [0.0, 0.0]
   f3dot: [0.0, 0.0]
   f4dot: [0.0, 0.0]
@@ -22,16 +26,23 @@ glitch:
   tglitch: [0.0, 1.0]       # fraction of the observation span
   dnu_nu: [1.0e-6, 1.0e-6]
   dnu1_nu1: [1.0e-3, 1.0e-3]
-  Q: [0.7, 0.7]
+  healing_factor: [0.7, 0.7]
   tau: [864000, 864000]     # seconds
-  evenly_spaced_tglitch: true
+  evenly_spaced_tglitch: false # true for easy analysis
 
 observation:
   ifos: [H1, L1]
   tref: 1372426000
   Tsft: 1800
-  timestamps_file: /scratch/kriles_root/kriles0/damoncht/cwglitch/data/real_data/o4a_timestamps.csv
-  noise: {kind: gaussian, sqrtSX: 1.0e-22}   # or {kind: real, sft_dir: /path/to/sfts}
+  # Gaussian noise; one SFT per start time in the JSON file {"H1": [GPS times], "L1": [...]}:
+  noise:
+    kind: gaussian
+    sqrtSX: 1.0e-22
+    timestamps: /scratch/kriles_root/kriles0/damoncht/cwglitch/data/real_data/o4a_timestamps.json
+  # or inject into real SFTs (timestamps and IFO selection come from the SFT headers):
+  # noise:
+  #   kind: real
+  #   sft_glob: /path/to/data_sfdb/O4aFromSFDBifo*Tcoh1024Fmin203.0Fmax212.0.sft
   dt_wf: 5.0
   window_type: tukey
   window_param: 0.001
